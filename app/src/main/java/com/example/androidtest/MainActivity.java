@@ -11,6 +11,7 @@ import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
@@ -25,6 +26,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.example.androidtest.database.SQLiteHelper;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -45,14 +47,19 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String IMAGE_DIRECTORY = "/android_test_yash";
+
     private int GALLERY = 1, CAMERA = 2;
+
     ImageButton topbutton, shuffleButton, favouriteButton, bottomButton;
+    Button addImageButton, clotheListButton;
     ImageView topImage, bottomImage;
     ByteArrayOutputStream streamTop, streamBottom;
-    boolean isTopImage;
-    boolean isBottomImage;
+    boolean isTopImage, isBottomImage;
     private Uri selectedImageUriTop;
     private Uri selectedImageUriBottom;
+
+    public static SQLiteHelper sqLiteHelper;
+
 
     public static final String TAG = "MainActivity";
 
@@ -64,6 +71,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         isTopImage = false;
         isBottomImage = false;
 
+        sqLiteHelper = new SQLiteHelper(this, "ClotheDB.sqlite", null, 1);
+
+        sqLiteHelper.queryData("CREATE TABLE IF NOT EXISTS CLOTHES(Id INTEGER PRIMARY KEY AUTOINCREMENT, image BLOB)");
+
+
         // referencing
         topbutton = (ImageButton) findViewById(R.id.topButton);
         shuffleButton = (ImageButton) findViewById(R.id.shuffleButton);
@@ -71,12 +83,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bottomButton = (ImageButton) findViewById(R.id.bottomButton);
         topImage = (ImageView) findViewById(R.id.topImage);
         bottomImage = (ImageView) findViewById(R.id.bottomImage);
+        addImageButton = (Button) findViewById(R.id.addImageButton);
+        clotheListButton = (Button) findViewById(R.id.clotheListButton);
 
         // setting clicklistener
         topbutton.setOnClickListener(this);
         shuffleButton.setOnClickListener(this);
         favouriteButton.setOnClickListener(this);
         bottomButton.setOnClickListener(this);
+        addImageButton.setOnClickListener(this);
+        clotheListButton.setOnClickListener(this);
 
         Log.d(TAG, "inside onCreate");
     }
@@ -102,6 +118,48 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.d(TAG, "inside bottom onClick");
         }
 
+        if(view == addImageButton){
+            try{
+                //if(isTopImage){
+               // if(topImage != null){
+                    sqLiteHelper.insertData(
+                            imageViewToByte(topImage)
+                    );
+                    Toast.makeText(getApplicationContext(), "Added successfully!", Toast.LENGTH_SHORT).show();
+                //}
+
+                    //Toast.makeText(getApplicationContext(), "Added successfully!", Toast.LENGTH_SHORT).show();
+               // }
+
+               // if(isBottomImage){
+                //if(bottomImage != null){
+                    sqLiteHelper.insertData(
+                            imageViewToByte(bottomImage)
+                    );
+                    Toast.makeText(getApplicationContext(), "Added successfully!", Toast.LENGTH_SHORT).show();
+
+                //}
+
+              //  }
+
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        if(view == clotheListButton){
+            Intent intent = new Intent(MainActivity.this, ClothesList.class);
+            startActivity(intent);
+        }
+    }
+
+    public static byte[] imageViewToByte(ImageView image) {
+        Bitmap bitmap = ((BitmapDrawable)image.getDrawable()).getBitmap();
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        byte[] byteArray = stream.toByteArray();
+        return byteArray;
     }
 
     // showing picture dialog
@@ -139,8 +197,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(intent, CAMERA);
     }
-
-
 
 
     @Override
